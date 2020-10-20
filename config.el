@@ -53,3 +53,6 @@
 ;; they are implemented.
 
 (setq projectile-project-search-path '("~/Documents/Projects/"))
+(setq org-journal-date-format "%A, %d %B %Y"
+      org-journal-file-format "%Y-%m-%d.org"
+      org-journal-dir "~/Documents/Notes/journal")
