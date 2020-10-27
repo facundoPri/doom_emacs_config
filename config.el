@@ -43,35 +43,6 @@
       :desc "Load new theme"
       "h t" #'counsel-load-theme)
 
-(require 'emms-setup)
-(require 'emms-info)
-(require 'emms-cue)
-(require 'emms-mode-line)
-(require 'emms-playing-time)
-(emms-all)
-(emms-default-players)
-(emms-mode-line 1)
-(emms-playing-time 1)
-(setq emms-source-file-default-directory "~/Music/Non-Classical/70s-80s/"
-      emms-playlist-buffer-name "*Music*"
-      emms-info-asynchronously t
-      emms-source-file-directory-tree-function 'emms-source-file-directory-tree-find)
-(map! :leader
-      :desc "Go to emms playlist"
-      "a a" #'emms-playlist-mode-go
-      :leader
-      :desc "Emms pause track"
-      "a x" #'emms-pause
-      :leader
-      :desc "Emms stop track"
-      "a s" #'emms-stop
-      :leader
-      :desc "Emms play previous track"
-      "a p" #'emms-previous
-      :leader
-      :desc "Emms play next track"
-      "a n" #'emms-next)
-
 (map! :leader
       :desc "Evaluate elisp in buffer"
       "e b" #'eval-buffer
@@ -140,7 +111,8 @@
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
   (setq org-directory "~/Documents/Notes/Org/"
         org-agenda-files
-        '("~/Documents/Notes/Org/Tasks.org")
+        '("~/Documents/Notes/Org/Tasks.org"
+          "~/Documents/Notes/Org/Habits.org")
         org-default-notes-file (expand-file-name "notes.org" org-directory)
         org-ellipsis " ▼ "
         org-log-done 'time
@@ -174,7 +146,137 @@
                   (org-level-6 . 1.0)
                   (org-level-7 . 1.0)
                   (org-level-8 . 1.0)))
-    (set-face-attribute (car face) nil :height (cdr face))))
+    (set-face-attribute (car face) nil :height (cdr face)))
+
+  ;; Configure custom agenda views
+  (setq org-agenda-custom-commands
+        '(("d" "Dashboard" ((agenda "" ((org-deadline-warning-days 7)))
+                            (todo "PROC" ((org-agenda-overriding-header "Process Tasks")))
+                            (todo "NEXT" ((org-agenda-overriding-header "Next Tasks")))
+                            (tags-todo "agenda/ACTIVE" ((org-agenda-overriding-header "Active Projects")))))
+
+          ("n" "Next Tasks"
+           ((todo "NEXT" ((org-agenda-overriding-header "Next Tasks")))))
+
+          ("p" "Active Projects"
+           ((agenda "") (todo "ACTIVE" ((org-agenda-overriding-header "Active Projects") (org-agenda-max-todos 5) (org-agenda-files org-agenda-files)))))
+
+          ("F" "Facultad Tasks" tags-todo "+facultad")
+
+          ("w" "Workflow Status"
+           ((todo "WAIT"
+                  ((org-agenda-overriding-header "Waiting on External")(org-agenda-files org-agenda-files)))
+            (todo "REVIEW"
+                  ((org-agenda-overriding-header "In Review")
+                   (org-agenda-files org-agenda-files)))
+            (todo "PLAN"
+                  ((org-agenda-overriding-header "In Planning")
+                   (org-agenda-todo-list-sublevels nil)
+                   (org-agenda-files org-agenda-files)))
+            (todo "BACKLOG"
+                  ((org-agenda-overriding-header "Project Backlog")
+                   (org-agenda-todo-list-sublevels nil)
+                   (org-agenda-files org-agenda-files)))
+            (todo "READY"
+                  ((org-agenda-overriding-header "Ready for Work")
+                   (org-agenda-files org-agenda-files)))
+            (todo "ACTIVE"
+                  ((org-agenda-overriding-header "Active Projects")
+                   (org-agenda-files org-agenda-files)))
+            (todo "COMPLETED"
+                  ((org-agenda-overriding-header "Completed Projects")
+                   (org-agenda-files org-agenda-files)))))
+
+          ;; Low-effort next actions
+          ("e" tags-todo "+TODO=\"NEXT\"+Effort<10&+Effort>0"
+           ((org-agenda-overriding-header "Low Effort Tasks")
+            (org-agenda-max-todos 20)
+            (org-agenda-files org-agenda-files)))))
+
+  (setq org-refile-targets
+        '(("Archive.org" :maxlevel . 1)
+          ("Tasks.org" :maxlevel . 1)))
+
+  ;; Save Org buffers after refiling!
+  (advice-add 'org-refile :after 'org-save-all-org-buffers)
+
+  ;; Configure common tags
+  (setq org-tag-alist
+        '((:startgroup)
+                                        ; Put mutually exclusive tags here
+          (:endgroup)
+          ("@home" . ?H)
+          ("@work" . ?W)
+          ("agenda" . ?a)
+          ("planning" . ?p)
+          ("note" . ?n)
+          ("idea" . ?i)
+          ("thinking" . ?t))))
+
+(after! org
+  (setq org-capture-templates
+        `(("t" "Tasks / Projects")
+          ("ts" "Simple Task" entry (file+olp "~/Documents/Notes/Org/Tasks.org" "Inbox")
+           "* TODO %?\n  %i" :empty-lines 1)
+          ("tt" "Task" entry (file+olp "~/Documents/Notes/Org/Tasks.org" "Inbox")
+           "* TODO %?\n  %U\n  %i" :empty-lines 1)
+          ("tr" "Task with reference" entry (file+olp "~/Documents/Notes/Org/Tasks.org" "Inbox")
+           "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
+          ("tp" "New Project" entry (file+olp ,"~/Documents/Notes/Org/Tasks.org" "Projects" "Inbox")
+           "* PLAN %?\n  %U\n  %a\n  %i" :empty-lines 1)
+
+          ("n" "Notes")
+          ("ni" "Idea" entry (file+olp "~/Documents/Notes/Org/Notes.org" "Inbox")
+           "* PLAN %^{Idea} :idea:\n%?")
+
+          ("j" "Journal Entries")
+          ("jj" "Journal" entry
+           (file+olp+datetree "~/Documents/Notes/Org/Journal.org")
+           "\n* %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
+           ;; ,(dw/read-file-as-string "~/Notes/Templates/Daily.org")
+           :clock-in :clock-resume
+           :empty-lines 1)
+          ("jm" "Meeting" entry
+           (file+olp+datetree "~/Documents/Notes/Org/Journal.org")
+           "* %<%I:%M %p> - %a :meetings:\n\n%?\n\n"
+           :clock-in :clock-resume
+           :empty-lines 1)
+          ("jt" "Thinking" entry
+           (file+olp+datetree , "~/Documents/Notes/Org/Journal.org")
+           "\n* %<%I:%M %p> - %^{Topic} :thoughts:\n\n%?\n\n"
+           :clock-in :clock-resume
+           :empty-lines 1)
+          ("jc" "Clocked Entry Notes" entry
+           (file+olp+datetree , "~/Documents/Notes/Org/Journal.org")
+           "* %<%I:%M %p> - %K :notes:\n\n%?"
+           :empty-lines 1)
+          ;; ("jg" "Clocked General Task" entry
+          ;;  (file+olp+datetree , "~/Documents/Notes/Org/Journal.org"))
+          ;; "* %<%I:%M %p> - %^{Task description} %^g\n\n%?"
+          ;; :clock-in :clock-resume
+          ;; :empty-lines 1)
+
+          ("w" "Workflows")
+          ("we" "Checking Email" entry (file+olp+datetree "~/Documents/Notes/Org/Journal.org")
+           "* Checking Email :email:\n\n%?" :clock-in :clock-resume :empty-lines 1)
+
+          ("m" "Metrics Capture")
+          ("mw" "Weight" table-line (file+headline "~/Documents/Notes/Org/Metrics.org" "Weight")
+           "| %U | %^{Weight} | %^{Notes} |" :kill-buffer t)))
+
+  (require 'org-habit)
+  (add-to-list 'org-modules 'org-habit)
+  (setq org-habit-graph-column 60))
+
+;; Since we don't want to disable org-confirm-babel-evaluate all
+;; of the time, do it around the after-save-hook
+(defun dw/org-babel-tangle-dont-ask ()
+  ;; Dynamic scoping to the rescue
+  (let ((org-confirm-babel-evaluate nil))
+    (org-babel-tangle)))
+
+(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'dw/org-babel-tangle-dont-ask
+                                              'run-at-end 'only-in-org-mode)))
 
 (setq deft-directory "~/Documents/Notes"
       deft-extensions '("txt" "org" "md")
