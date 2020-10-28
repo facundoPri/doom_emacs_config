@@ -112,7 +112,8 @@
   (setq org-directory "~/Documents/Notes/Org/"
         org-agenda-files
         '("~/Documents/Notes/Org/Tasks.org"
-          "~/Documents/Notes/Org/Habits.org")
+          "~/Documents/Notes/Org/Habits.org"
+          "~/Documents/Notes/Org/Agenda.org")
         org-default-notes-file (expand-file-name "notes.org" org-directory)
         org-ellipsis " ▼ "
         org-log-done 'time
