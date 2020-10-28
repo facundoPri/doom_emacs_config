@@ -337,6 +337,10 @@ Note that I wrapped most of this in (after! org).  Without this, my settings mig
           ("planning" . ?p)
           ("note" . ?n)
           ("idea" . ?i)
+          ("facultad" . ?i)
+          ("algoritmos" . ?i)
+          ("analisis_I" . ?i)
+          ("fisica_I" . ?i)
           ("thinking" . ?t))))
 #+END_SRC
 

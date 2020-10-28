@@ -212,6 +212,10 @@
           ("planning" . ?p)
           ("note" . ?n)
           ("idea" . ?i)
+          ("facultad" . ?i)
+          ("algoritmos" . ?i)
+          ("analisis_I" . ?i)
+          ("fisica_I" . ?i)
           ("thinking" . ?t))))
 
 (after! org
