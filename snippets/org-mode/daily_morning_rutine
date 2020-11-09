@@ -1,0 +1,21 @@
+# -*- mode: snippet -*-
+# name: Daily morning rutine 
+# key: /mr
+# --
+- [  ] Hacer la cama
+- [  ] Desayunar
+- [  ] Lavarse los dientes
+- [  ] Estiraciones 
+- [  ] Ordenar escritorio
+- [  ] Leer emails de la facultad y personales
+- [  ] Leer whatsapps de la facultad
+- [  ] Revisar campus facultad
+- [  ] Ordenar tareas del dia
+#+begin_src emacs-lisp
+;; Open agenda in lateral buffer 
+(progn
+  (+evil-window-vsplit-a)
+  (org-agenda nil "a")
+  (org-agenda-day-view)
+  )
+#+end_src
