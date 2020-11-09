@@ -4,32 +4,137 @@
 #+PROPERTY: header-args :tangle config.el
 
 * TABLE OF CONTENTS :toc:
-- [[#about-this-config][ABOUT THIS CONFIG]]
+- [[#personal-information][PERSONAL INFORMATION]]
+- [[#better-defaults][BETTER DEFAULTS]]
+  - [[#simple-settings][Simple settings]]
+  - [[#windows][Windows]]
+  - [[#buffer-default][Buffer default]]
+- [[#visual-settings][VISUAL SETTINGS]]
+  - [[#fonts][FONTS]]
+  - [[#theme][THEME]]
+  - [[#miscellaneous][MISCELLANEOUS]]
 - [[#bookmarks-and-buffers][BOOKMARKS AND BUFFERS]]
-- [[#centaur-tabs][CENTAUR-TABS]]
-- [[#dired][DIRED]]
-- [[#doom-theme][DOOM THEME]]
 - [[#evaluate-elisp-expressions][EVALUATE ELISP EXPRESSIONS]]
-- [[#eww][EWW]]
-- [[#fonts][FONTS]]
 - [[#ivy][IVY]]
 - [[#line-settings][LINE SETTINGS]]
 - [[#manpages][MANPAGES]]
-- [[#mastodon][MASTODON]]
 - [[#neotree][NEOTREE]]
 - [[#org-mode][ORG MODE]]
-- [[#capture-templates][Capture Templates]]
+  - [[#tweaking-defaults][Tweaking defaults]]
+  - [[#extra-functionality][Extra Functionality]]
+  - [[#super-agenda][Super agenda]]
+  - [[#capture-templates][Capture templates]]
+  - [[#habits][Habits]]
+  - [[#visuals][Visuals]]
+  - [[#babel][Babel]]
 - [[#automatically-tangle-on-save][Automatically "Tangle" on Save]]
 - [[#deft][DEFT]]
 - [[#registers][REGISTERS]]
 - [[#shells][SHELLS]]
 - [[#splits][SPLITS]]
 - [[#sublimity][SUBLIMITY]]
-- [[#winner-mode][WINNER MODE]]
+- [[#centaur-tabs][CENTAUR TABS]]
+- [[#company][COMPANY]]
+- [[#ess][ESS]]
+- [[#eros-eval][EROS-EVAL]]
+- [[#evil][EVIL]]
+- [[#info-colors][INFO COLORS]]
+- [[#magit][MAGIT]]
+- [[#org-msg][ORG MSG]]
+- [[#org-chef][ORG CHEF]]
+- [[#which-key][WHICH-KEY]]
+- [[#writeroom][WRITEROOM]]
+- [[#yasnippet][YASNIPPET]]
+- [[#markdown][MARKDOWN]]
 
-* ABOUT THIS CONFIG 
-This is my personal Doom Emacs config.  Doom Emacs is a distribution of Emacs that uses the "evil" keybindings (Vim keybindings) and includes a number of nice extensions and a bit of configuration out of the box.  I am maintaing this config not just for myself, but also for those that want to explore some of what is possible with Emacs.  I will add a lot of examples of plugins and settings, some of them I may not even use personally.  I do this because many people following me on YouTube look at my configs as "documentation".
+* PERSONAL INFORMATION
+#+BEGIN_SRC emacs-lisp
+(setq user-full-name "Facundo Prieto"
+      user-mail-address "facundo.prieto321@gmail.com")
+#+END_SRC
+* BETTER DEFAULTS
+** Simple settings
+#+BEGIN_SRC emacs-lisp
+(setq-default
+ delete-by-moving-to-trash t                      ; Delete files to trash
+ window-combination-resize t                      ; take new window space from all other windows (not just current)
+ x-stretch-cursor t)                              ; Stretch cursor to the glyph width
 
+(setq undo-limit 80000000                         ; Raise undo-limit to 80Mb
+      evil-want-fine-undo t                       ; By default while in insert all changes are one big blob. Be more granular
+      auto-save-default t)                        ; Nobody likes to loose work, I certainly don't
+
+(display-time-mode 1)                             ; Enable time in the mode-line
+(unless (equal "Battery status not available"
+               (battery))
+  (display-battery-mode 1))                       ; On laptops it's nice to know how much power you have
+(global-subword-mode 1)                           ; Iterate through CamelCase words
+#+END_SRC
+** Windows
+Asks which buffer i want to see after splitting the window
+First, we'll enter the new window
+#+BEGIN_SRC emacs-lisp
+(setq evil-vsplit-window-right t
+      evil-split-window-below t)
+#+END_SRC
+Then, we'll pull up ~ivy~
+#+BEGIN_SRC emacs-lisp
+(defadvice! prompt-for-buffer (&rest _)
+  :after '(evil-window-split evil-window-vsplit)
+  (+ivy/switch-buffer))
+#+END_SRC
+Preview
+#+BEGIN_SRC emacs-lisp
+(setq +ivy-buffer-preview t)
+#+END_SRC
+** Buffer default
+New buffers will open on ~org-mode~ instead of ~fundamental-mode~
+#+BEGIN_SRC emacs-lisp
+(setq-default major-mode 'org-mode)
+#+END_SRC
+* VISUAL SETTINGS
+** FONTS
+Settings related to fonts within Doom Emacs:
++ 'doom-font' -- standard monospace font that is used for most things in Emacs.
++ 'doom-variable-pitch-font' -- variable font which is useful in some Emacs plugins.
++ 'doom-big-font' -- used in doom-big-font-mode; useful for presentations.
++ 'font-lock-comment-face' -- for comments.
++ 'font-lock-keyword-face' -- for keywords with special significance, like ‘for’ and ‘if’ in C.
+
+#+BEGIN_SRC emacs-lisp
+(setq doom-font (font-spec :family "JetBrains Mono" :size 15)
+      doom-big-font (font-spec :family "JetBrains Mono" :size 20)
+      doom-variable-pitch-font (font-spec :family "Ubuntu" :size 15))
+
+(after! doom-themes
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t))
+
+(custom-set-faces!
+  '(font-lock-comment-face :slant italic)
+  '(font-lock-keyword-face :slant italic))
+
+;; remove ligatures on python-mode
+(set-ligatures! 'python-mode nil)
+#+END_SRC
+** THEME
+Setting the theme to doom-one.  To try out new themes, I set a keybinding for counsel-load-theme with 'SPC h t'.
+#+BEGIN_SRC emacs-lisp
+(setq doom-theme 'doom-vibrant)
+(map! :leader
+      :desc "Load new theme"
+      "h t" #'counsel-load-theme)
+#+END_SRC
+** MISCELLANEOUS
+Nicer default buffer names
+#+BEGIN_SRC emacs-lisp
+(setq doom-fallback-buffer-name "Doom"
+      +doom-dashboard-name "Doom")
+#+END_SRC
+Fix bug with insert mode for org documents
+#+BEGIN_SRC emacs-lisp
+(custom-set-faces! '(doom-modeline-evil-insert-state :weight bold :foreground "#339CDB"))
+#+END_SRC
 * BOOKMARKS AND BUFFERS
 Doom Emacs uses 'SPC b' for keybindings related to bookmarks and buffers.  Bookmarks are somewhat like registers in that they record positions you can jump to.  Unlike registers, they have long names, and they persist automatically from one Emacs session to the next. The prototypical use of bookmarks is to record where you were reading in various files.  Regarding /buffers/, the text you are editing in Emacs resides in an object called a /buffer/. Each time you visit a file, a buffer is used to hold the file’s text. Each time you invoke Dired, a buffer is used to hold the directory listing.
 
@@ -41,87 +146,16 @@ Doom Emacs uses 'SPC b' for keybindings related to bookmarks and buffers.  Bookm
       :desc "Save current bookmarks to bookmark file"
       "b w" #'bookmark-save)
 #+END_SRC
-
-* CENTAUR-TABS
-To use tabs in Doom Emacs, be sure to uncomment "tabs" in Doom's init.el.  Displays tabs at the top of the window similar to tabbed web browsers such as Firefox.  I don't actually use tabs in Emacs.  I placed this in my config to help others who may want tabs.  In the default configuration of Doom Emacs, 'SPC t' is used for "toggle" keybindings, so I choose 'SPC t c' to toggle centaur-tabs.  The "g" prefix for keybindings is used for a bunch of evil keybindings in Doom, but "g" plus the arrow keys were not used, so I thought I would bind those for tab navigation.  But I did leave the default "g t" and "g T" intact if you prefer to use those for centaur-tabs-forward/backward.
-
-| COMMAND                     | DESCRIPTION          | KEYBINDING       |
-|-----------------------------+----------------------+------------------|
-| centaur-tabs-local-mode     | /Toggle tabs on/off/   | SPC t c          |
-| centaur-tabs-forward        | /Next tab/             | g <right> or g t |
-| centaur-tabs-backward       | /Previous tab/         | g <left> or g T  |
-| centaur-tabs-forward-group  | /Next tab group/       | g <down>         |
-| centaur-tabs-backward-group | /Previous tab group/   | g <up>           |
-
-#+BEGIN_SRC emacs-lisp
-(setq centaur-tabs-set-bar 'over
-      centaur-tabs-set-icons t
-      centaur-tabs-gray-out-icons 'buffer
-      centaur-tabs-height 24
-      centaur-tabs-set-modified-marker t
-      centaur-tabs-style "bar"
-      centaur-tabs-modified-marker "•")
-(map! :leader
-      :desc "Toggle tabs on/off"
-      "t c" #'centaur-tabs-local-mode)
-(evil-define-key 'normal centaur-tabs-mode-map (kbd "g <right>") 'centaur-tabs-forward       ; default Doom binding is 'g t'
-                                               (kbd "g <left>") 'centaur-tabs-backward       ; default Doom binding is 'g T'
-                                               (kbd "g <down>") 'centaur-tabs-forward-group
-                                               (kbd "g <up>") 'centaur-tabs-backward-group)
-#+END_SRC
-
-* DIRED
-Dired is the file manager within Emacs.  Below, I setup keybindings for image previews (peep-dired).  Doom Emacs does not use 'SPC d' for any of its keybindings, so I've chosen the format of 'SPC d' plus 'key'.
-
-| COMMAND                                   | DESCRIPTION                                | KEYBINDING |
-|-------------------------------------------+--------------------------------------------+------------|
-| dired                                     | /Open dired file manager/                    | SPC d d    |
-| dired-jump                                | /Jump to current directory in dired/         | SPC d j    |
-| (in dired) peep-dired                     | /Toggle image previews within dired/         | SPC d p    |
-| (in dired) dired-view-file                | /View file in dired/                         | SPC d v    |
-| (in peep-dired-mode) peep-dired-next-file | /Move to next file in peep-dired-mode/       | j          |
-| (in peep-dired-mode) peep-dired-prev-file | /Move to previous file in peep-dired-mode/   | k          |
-
-#+BEGIN_SRC emacs-lisp
-(map! :leader
-      :desc "Dired"
-      "d d" #'dired
-      :leader
-      :desc "Dired jump to current"
-      "d j" #'dired-jump
-      (:after dired
-        (:map dired-mode-map
-         :leader
-         :desc "Peep-dired image previews"
-         "d p" #'peep-dired
-         :leader
-         :desc "Dired view file"
-         "d v" #'dired-view-file)))
-(evil-define-key 'normal peep-dired-mode-map (kbd "j") 'peep-dired-next-file
-                                             (kbd "k") 'peep-dired-prev-file)
-(add-hook 'peep-dired-hook 'evil-normalize-keymaps)
-#+END_SRC
-
-* DOOM THEME 
-Setting the theme to doom-one.  To try out new themes, I set a keybinding for counsel-load-theme with 'SPC h t'.
-
-#+BEGIN_SRC emacs-lisp
-(setq doom-theme 'doom-one)
-(map! :leader
-      :desc "Load new theme"
-      "h t" #'counsel-load-theme)
-#+END_SRC
-
 * EVALUATE ELISP EXPRESSIONS
 Changing some keybindings from their defaults to better fit with Doom Emacs, and to avoid conflicts with my window managers which sometimes use the control key in their keybindings.  By default, Doom Emacs does not use 'SPC e' for anything, so I choose to use the format 'SPC e' plus 'key' for these (I also use 'SPC e' for 'eww' keybindings).
 
-| COMMAND         | DESCRIPTION                                    | KEYBINDING |
-|-----------------+------------------------------------------------+------------|
-| eval-buffer     | /Evaluate elisp in buffer/                       | SPC e b    |
-| eval-defun      | /Evaluate the defun containing or after point/   | SPC e d    |
-| eval-expression | /Evaluate an elisp expression/                   | SPC e e    |
-| eval-last-sexp  | /Evaluate elisp expression before point/         | SPC e l    |
-| eval-region     | /Evaluate elisp in region/                       | SPC e r    |
+| COMMAND         | DESCRIPTION                                  | KEYBINDING |
+|-----------------+----------------------------------------------+------------|
+| eval-buffer     | /Evaluate elisp in buffer/                     | SPC e b    |
+| eval-defun      | /Evaluate the defun containing or after point/ | SPC e d    |
+| eval-expression | /Evaluate an elisp expression/                 | SPC e e    |
+| eval-last-sexp  | /Evaluate elisp expression before point/       | SPC e l    |
+| eval-region     | /Evaluate elisp in region/                     | SPC e r    |
 
 #+Begin_src emacs-lisp
 (map! :leader
@@ -140,43 +174,6 @@ Changing some keybindings from their defaults to better fit with Doom Emacs, and
       :desc "Evaluate elisp in region"
       "e r" #'eval-region)
 #+END_SRC
-
-* EWW
-EWW is the Emacs Web Wowser, the builtin browser in Emacs.  Below I set urls to open in a specific browser (eww) with browse-url-browser-function.  By default, Doom Emacs does not use 'SPC e' for anything, so I choose to use the format 'SPC e' plus 'key' for these (I also use 'SPC e' for 'eval' keybindings).  I chose to use 'SPC s w' for eww-search-words because Doom Emacs uses 'SPC s' for 'search' commands.
-
-#+BEGIN_SRC emacs-lisp
-(setq browse-url-browser-function 'eww-browse-url)
-(map! :leader
-      :desc "Eww web browser"
-      "e w" #'eww
-      :leader
-      :desc "Eww reload page"
-      "e R" #'eww-reload
-      :leader
-      :desc "Search web for text between BEG/END"
-      "s w" #'eww-search-words)
-#+END_SRC
-
-* FONTS
-Settings related to fonts within Doom Emacs:
-+ 'doom-font' -- standard monospace font that is used for most things in Emacs.
-+ 'doom-variable-pitch-font' -- variable font which is useful in some Emacs plugins.
-+ 'doom-big-font' -- used in doom-big-font-mode; useful for presentations.
-+ 'font-lock-comment-face' -- for comments.
-+ 'font-lock-keyword-face' -- for keywords with special significance, like ‘for’ and ‘if’ in C.
-
-#+BEGIN_SRC emacs-lisp
-(setq doom-font (font-spec :family "JetBrains Mono" :size 15)
-      doom-variable-pitch-font (font-spec :family "Ubuntu" :size 15)
-      doom-big-font (font-spec :family "JetBrains Mono" :size 24))
-(after! doom-themes
-  (setq doom-themes-enable-bold t
-        doom-themes-enable-italic t))
-(custom-set-faces!
-  '(font-lock-comment-face :slant italic)
-  '(font-lock-keyword-face :slant italic))
-#+END_SRC
-
 * IVY
 Ivy is a generic completion mechanism for Emacs.  By default, Doom Emacs does not use 'SPC v', so the format I use for these bindings is 'SPC v' plus 'key'.
 
@@ -187,8 +184,10 @@ Ivy is a generic completion mechanism for Emacs.  By default, Doom Emacs does no
       :leader
       :desc "Ivy switch view"
       "v s" #'ivy-switch-view)
-#+END_SRC
 
+(setq ivy-read-action-function #'ivy-hydra-read-action)
+(setq ivy-sort-max-size 50000)
+#+END_SRC
 * LINE SETTINGS
 I have toggled display-line-numbers-type so I have line numbers displayed.  Doom Emacs uses 'SPC t' for "toggle" commands, so I choose 'SPC t t' for toggle-truncate-lines.
 
@@ -198,21 +197,11 @@ I have toggled display-line-numbers-type so I have line numbers displayed.  Doom
       :desc "Toggle truncate lines"
       "t t" #'toggle-truncate-lines)
 #+END_SRC
-
 * MANPAGES
 
 #+BEGIN_SRC emacs-lisp
 (require 'ox-groff)
 #+END_SRC
-
-* MASTODON
-Mastodon.el is a mastodon client for Emacs.  Note that I wrapped my settings with (after! mastodon).  Without this, my settings for the mastodon instance that I use would be overwritten by the default settings for this module, which is "mastodon.social".
-
-#+BEGIN_SRC emacs-lisp
-(after! mastodon
-  (setq mastodon-instance-url "https://mastodon.technology/"))
-#+END_SRC
-
 * NEOTREE
 Neotree is a file tree viewer.  When you open neotree, it jumps to the current file thanks to neo-smart-open.  The neo-window-fixed-size setting makes the neotree width be adjustable.  Doom Emacs had no keybindings set for neotree.  Since Doom Emacs uses 'SPC t' for 'toggle' keybindings, I used 'SPC t n' for toggle-neotree.
 
@@ -226,180 +215,425 @@ Neotree is a file tree viewer.  When you open neotree, it jumps to the current f
       :desc "Toggle neotree file viewer"
       "t n" #'neotree-toggle)
 #+END_SRC
-
 * ORG MODE
 Note that I wrapped most of this in (after! org).  Without this, my settings might be evaluated too early, which will result in my settings being overwritten by Doom's defaults.  I have also enabled org-journal by adding (+journal) to the org section of my Doom Emacs init.el.
-
+** Tweaking defaults
 #+BEGIN_SRC emacs-lisp
-(after! org
-  (require 'org-bullets)  ; Nicer bullets in org-mode
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-  (setq org-directory "~/Documents/Notes/Org/"
-        org-agenda-files
-        '("~/Documents/Notes/Org/Tasks.org"
-          "~/Documents/Notes/Org/Habits.org"
-          "~/Documents/Notes/Org/Agenda.org")
-        org-default-notes-file (expand-file-name "notes.org" org-directory)
-        org-ellipsis " ▼ "
-        org-log-done 'time
-        org-journal-dir "~/Documents/Notes/Org/journal/"
-        org-journal-date-format "%A, %d %B %Y"
-        org-journal-file-format "%Y-%m-%d.org"
-        org-hide-emphasis-markers t
-        ;; ex. of org-link-abbrev-alist in action
-        ;; [[arch-wiki:Name_of_Page][Description]]
-        org-link-abbrev-alist    ; This overwrites the default Doom org-link-abbrev-list
-        '(("google" . "http://www.google.com/search?q=")
-          ("arch-wiki" . "https://wiki.archlinux.org/index.php/")
-          ("ddg" . "https://duckduckgo.com/?q=")
-          ("wiki" . "https://en.wikipedia.org/wiki/"))
-        org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")
-        org-todo-keywords        ; This overwrites the default Doom org-todo-keywords
-        '((sequence
-           "TODO(t)" "NEXT(n)" "WAIT(w)" "|" "DONE(d)")
-          (sequence "BACKLOG(b)" "PLAN(p)" "READY(r)" "ACTIVE(a)" "REVIEW(v)" "HOLD(h)" "|" "COMPLETED(c)" "CANCELLED(q)")))
-
-  ;; Remplace list hyphen with dot
-  (font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-  ;; Scale font by heading
-  (dolist (face '((org-level-1 . 1.2)
-                  (org-level-2 . 1.1)
-                  (org-level-3 . 1.05)
-                  (org-level-4 . 1.0)
-                  (org-level-5 . 1.0)
-                  (org-level-6 . 1.0)
-                  (org-level-7 . 1.0)
-                  (org-level-8 . 1.0)))
-    (set-face-attribute (car face) nil :height (cdr face)))
-
-  ;; Configure custom agenda views
-  (setq org-agenda-custom-commands
-        '(("d" "Dashboard" ((agenda "" ((org-deadline-warning-days 7)))
-                            (todo "PROC" ((org-agenda-overriding-header "Process Tasks")))
-                            (todo "NEXT" ((org-agenda-overriding-header "Next Tasks")))
-                            (tags-todo "agenda/ACTIVE" ((org-agenda-overriding-header "Active Projects")))))
-
-          ("n" "Next Tasks"
-           ((todo "NEXT" ((org-agenda-overriding-header "Next Tasks")))))
-
-          ("p" "Active Projects"
-           ((agenda "") (todo "ACTIVE" ((org-agenda-overriding-header "Active Projects") (org-agenda-max-todos 5) (org-agenda-files org-agenda-files)))))
-
-          ("F" "Facultad Tasks" tags-todo "+facultad")
-
-          ("w" "Workflow Status"
-           ((todo "WAIT"
-                  ((org-agenda-overriding-header "Waiting on External")(org-agenda-files org-agenda-files)))
-            (todo "REVIEW"
-                  ((org-agenda-overriding-header "In Review")
-                   (org-agenda-files org-agenda-files)))
-            (todo "PLAN"
-                  ((org-agenda-overriding-header "In Planning")
-                   (org-agenda-todo-list-sublevels nil)
-                   (org-agenda-files org-agenda-files)))
-            (todo "BACKLOG"
-                  ((org-agenda-overriding-header "Project Backlog")
-                   (org-agenda-todo-list-sublevels nil)
-                   (org-agenda-files org-agenda-files)))
-            (todo "READY"
-                  ((org-agenda-overriding-header "Ready for Work")
-                   (org-agenda-files org-agenda-files)))
-            (todo "ACTIVE"
-                  ((org-agenda-overriding-header "Active Projects")
-                   (org-agenda-files org-agenda-files)))
-            (todo "COMPLETED"
-                  ((org-agenda-overriding-header "Completed Projects")
-                   (org-agenda-files org-agenda-files)))))
-
-          ;; Low-effort next actions
-          ("e" tags-todo "+TODO=\"NEXT\"+Effort<10&+Effort>0"
-           ((org-agenda-overriding-header "Low Effort Tasks")
-            (org-agenda-max-todos 20)
-            (org-agenda-files org-agenda-files)))))
-
-  (setq org-refile-targets
-        '(("Archive.org" :maxlevel . 1)
-          ("Tasks.org" :maxlevel . 1)))
-
-  ;; Save Org buffers after refiling!
-  (advice-add 'org-refile :after 'org-save-all-org-buffers)
-
-  ;; Configure common tags
-  (setq org-tag-alist
-        '((:startgroup)
-                                        ; Put mutually exclusive tags here
-          (:endgroup)
-          ("@home" . ?H)
-          ("@work" . ?W)
-          ("agenda" . ?a)
-          ("planning" . ?p)
-          ("note" . ?n)
-          ("idea" . ?i)
-          ("facultad" . ?i)
-          ("algoritmos" . ?i)
-          ("analisis_I" . ?i)
-          ("fisica_I" . ?i)
-          ("thinking" . ?t))))
+(setq org-directory  "~/Documents/Notes/Org/"     ; let's put files here
+      org-use-property-inheritance t              ; it's convenient to have properties inherited
+      org-log-done 'time                          ; having the time a item is done sounds convininet
+      org-list-allow-alphabetical t               ; have a. A. a A list bullets
+      org-export-in-background t                  ; run export processes in external emacs process
+      org-catch-invisible-edits 'smart            ; try not to accidently do weird stuff in invisible regions
+      org-re-reveal-root "https://cdn.jsdelivr.net/npm/reveal.js"
+      +org-capture-todo-file "~/Documents/Notes/Org/Todo.org"
+      org-agenda-files
+      '("~/Documents/Notes/Org/Tasks.org"
+        "~/Documents/Notes/Org/Habits.org"
+        "~/Documents/Notes/Org/Journal.org"
+        "~/Documents/Notes/Org/Agenda.org")
+      org-journal-dir "~/Documents/Notes/Org/journal/"
+      org-journal-date-format "%A, %d %B %Y"
+      org-journal-file-format "%Y-%m-%d.org")
 #+END_SRC
-
-* Capture Templates
+*** TAGs & TODO keywords
 #+BEGIN_SRC emacs-lisp
+(setq org-todo-keywords
+      '(
+        (sequence "TODO(t)" "IDEA(i)" "STARTED(s)" "NEXT(n)" "WAITING(w)" "METTING(m)" "FIXME" "|" "DONE(d)")
+        (sequence "[ ](T)" "[-](S)" "SOMEDAY(f)" "|" "[X](D)" "CANCELED(c)" "DELEGATED(l)")
+        ))
+(setq org-todo-keyword-faces
+      '(("IDEA" . (:foreground "GoldenRod" :weight bold))
+        ("NEXT" . (:foreground "IndianRed1" :weight bold))
+        ("STARTED" . (:foreground "OrangeRed" :weight bold))
+        ("[-]" . (:foreground "OrangeRed" :weight bold))
+        ("WAITING" . (:foreground "coral" :weight bold))
+        ("CANCELED" . (:foreground "LimeGreen" :weight bold))
+        ("DELEGATED" . (:foreground "LimeGreen" :weight bold))
+        ("SOMEDAY" . (:foreground "LimeGreen" :weight bold))
+        ))
+#+END_SRC
+TAGs persistent alist
+#+BEGIN_SRC emacs-lisp
+(setq org-tag-persistent-alist
+      '(
+        ("HOME" . ?h)
+        ("RESEARCH" . ?r)
+        ("DEV" . ?d)
+        ("EMACS" . ?s)
+        ("THINK" . ?t)
+        ("EASY" . ?e)
+        ("MEDIUM" . ?m)
+        ("HARD" . ?a)
+        ("URGENT" . ?u)
+        ("FACULTAD" . ?f)
+        ("FISICA" . ?i)
+        ("ANALISIS" . ?n)
+        ("ALGORITMOS" . ?l)
+        ("PARCIAL" . ?p)
+        ("TP" . ?T)
+        ))
+(setq org-tag-faces
+      '(
+        ("HOME" . (:foreground "GoldenRod" :weight bold))
+        ("RESEARCH" . (:foreground "GoldenRod" :weight bold))
+        ("THINK" . (:foreground "GoldenRod" :weight bold))
+        ("DEV" . (:foreground "IndianRed1" :weight bold))
+        ("EMACS" . (:foreground "IndianRed1" :weight bold))
+        ("URGENT" . (:foreground "Red" :weight bold))
+        ("EASY" . (:foreground "OrangeRed" :weight bold))
+        ("MEDIUM" . (:foreground "OrangeRed" :weight bold))
+        ("HARD" . (:foreground "OrangeRed" :weight bold))
+        ("FACULTAD" . (:foreground "GoldenRod" :weight bold))
+        ("FISICA" . (:foreground "LimeGreen" :weight bold))
+        ("ANALISIS" . (:foreground "LimeGreen" :weight bold))
+        ("ALGORITMOS" . (:foreground "LimeGreen" :weight bold))
+        ("PARCIAL" . (:foreground "LimeGreen" :weight bold))
+        ("TP" . (:foreground "LimeGreen" :weight bold))
+        ))
+#+END_SRC
+*** Headers default arguments
+#+BEGIN_SRC emacs-lisp
+(setq org-babel-default-header-args
+      '((:session . "none")
+        (:results . "replace")
+        (:exports . "code")
+        (:cache . "no")
+        (:noweb . "no")
+        (:hlines . "no")
+        (:tangle . "no")
+        (:comments . "link")))
+#+END_SRC
+*** Prevents some error with ~visual-line-mode~ and ~auto-fill-mode~
+#+BEGIN_SRC emacs-lisp
+(remove-hook 'text-mode-hook #'visual-line-mode)
+(add-hook 'text-mode-hook #'auto-fill-mode)
+#+END_SRC
+*** Arrow keys equivalents
+#+BEGIN_SRC emacs-lisp
+(map! :map evil-org-mode-map
+      :after evil-org
+      :n "g <up>" #'org-backward-heading-same-level
+      :n "g <down>" #'org-forward-heading-same-level
+      :n "g <left>" #'org-up-element
+      :n "g <right>" #'org-down-element)
+#+END_SRC
+*** Bullets and priorities
+Set the priority faces and elipsis
+#+BEGIN_SRC emacs-lisp
+(after! org-superstar
+  (setq org-superstar-headline-bullets-list '("◦""•")
+        org-superstar-prettify-item-bullets t ))
+
+(use-package org-fancy-priorities
+  :ensure t
+  :hook
+  (org-mode . org-fancy-priorities-mode)
+  :config
+  (setq org-fancy-priorities-list '((?A . "■ 5")
+                                    (?B . "■ 4")
+                                    (?C . "■ 3")
+                                    (?D . "■ 2")
+                                    (?E . "■ 1"))))
 (after! org
-  (setq org-capture-templates
-        `(("t" "Tasks / Projects")
-          ("ts" "Simple Task" entry (file+olp "~/Documents/Notes/Org/Tasks.org" "Inbox")
-           "* TODO %?\n  %i" :empty-lines 1)
-          ("tt" "Task" entry (file+olp "~/Documents/Notes/Org/Tasks.org" "Inbox")
-           "* TODO %?\n  %U\n  %i" :empty-lines 1)
-          ("tr" "Task with reference" entry (file+olp "~/Documents/Notes/Org/Tasks.org" "Inbox")
-           "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
-          ("tp" "New Project" entry (file+olp ,"~/Documents/Notes/Org/Tasks.org" "Projects" "Inbox")
-           "* PLAN %?\n  %U\n  %a\n  %i" :empty-lines 1)
+  (setq org-ellipsis " ▾ "
+        org-cycle-separator-lines -1
+        org-priority-highest ?A
+        org-priority-lowest ?E
+        org-priority-default ?C
+        org-priority-faces
+        '((?A . 'all-the-icons-red)
+          (?B . 'all-the-icons-orange)
+          (?C . 'all-the-icons-yellow)
+          (?D . 'all-the-icons-green)
+          (?E . 'all-the-icons-blue))))
+#+END_SRC
+** Extra Functionality
+*** Make easier the creation of a org buffer
+#+BEGIN_SRC emacs-lisp
+(evil-define-command evil-buffer-org-new (count file)
+  "Creates a new ORG buffer replacing the current window, optionally
+   editing a certain FILE"
+  :repeat nil
+  (interactive "P<f>")
+  (if file
+      (evil-edit file)
+    (let ((buffer (generate-new-buffer "*new org*")))
+      (set-window-buffer nil buffer)
+      (with-current-buffer buffer
+        (org-mode)))))
+(map! :leader
+      (:prefix "b"
+       :desc "New empty ORG buffer" "o" #'evil-buffer-org-new))
+#+END_SRC
+*** List bullet sequence
+List bullets change with depth
+#+BEGIN_SRC emacs-lisp
+(setq org-list-demote-modify-bullet '(("+" . "-") ("-" . "+") ("*" . "+") ("1." . "a.")))
+#+END_SRC
+*** Citation
+Cite something
+#+BEGIN_SRC emacs-lisp
+(use-package! org-ref
+  :after org
+  :config
+  (setq org-ref-completion-library 'org-ref-ivy-cite))
+#+END_SRC
+** Super agenda
+;;#+BEGIN_SRC emacs-lisp
+(use-package! org-super-agenda
+  :commands (org-super-agenda-mode))
+(after! org-agenda
+  (org-super-agenda-mode))
 
-          ("n" "Notes")
-          ("ni" "Idea" entry (file+olp "~/Documents/Notes/Org/Notes.org" "Inbox")
-           "* PLAN %^{Idea} :idea:\n%?")
+(setq org-agenda-skip-scheduled-if-done t
+      org-agenda-skip-deadline-if-done t
+      org-agenda-include-deadlines t
+      org-agenda-block-separator nil
+      org-agenda-tags-column 100 ;; from testing this seems to be a good value
+      org-agenda-compact-blocks t)
 
-          ("j" "Journal Entries")
-          ("jj" "Journal" entry
-           (file+olp+datetree "~/Documents/Notes/Org/Journal.org")
-           "\n* %<%I:%M %p> - Journal :journal:\n\n%?\n\n"
-           ;; ,(dw/read-file-as-string "~/Notes/Templates/Daily.org")
-           :clock-in :clock-resume
-           :empty-lines 1)
-          ("jm" "Meeting" entry
-           (file+olp+datetree "~/Documents/Notes/Org/Journal.org")
-           "* %<%I:%M %p> - %a :meetings:\n\n%?\n\n"
-           :clock-in :clock-resume
-           :empty-lines 1)
-          ("jt" "Thinking" entry
-           (file+olp+datetree , "~/Documents/Notes/Org/Journal.org")
-           "\n* %<%I:%M %p> - %^{Topic} :thoughts:\n\n%?\n\n"
-           :clock-in :clock-resume
-           :empty-lines 1)
-          ("jc" "Clocked Entry Notes" entry
-           (file+olp+datetree , "~/Documents/Notes/Org/Journal.org")
-           "* %<%I:%M %p> - %K :notes:\n\n%?"
-           :empty-lines 1)
-          ;; ("jg" "Clocked General Task" entry
-          ;;  (file+olp+datetree , "~/Documents/Notes/Org/Journal.org"))
-          ;; "* %<%I:%M %p> - %^{Task description} %^g\n\n%?"
-          ;; :clock-in :clock-resume
-          ;; :empty-lines 1)
+(let ((org-agenda-span 'day)
+      (org-super-agenda-groups
+       '((:name "Time grid items in all-uppercase with RosyBrown1 foreground"
+          :time-grid t
+          :transformer (--> it
+                            (upcase it)
+                            (propertize it 'face '(:foreground "RosyBrown1"))))
+         (:name "Priority >= C items underlined, on black background"
+          :face (:background "black" :underline t)
+          :not (:priority>= "C")
+          :order 100))))
+  (org-agenda nil "a"))
+;;#+END_SRC
+** Capture templates
+Cofiguration
+#+BEGIN_SRC emacs-lisp
+;; semi full screen for capture (I only need in some capture templates this funcionality)
+;;(add-hook 'org-capture-mode-hook 'doom/window-enlargen)
+(setq +org-capture-tasks  "~/Documents/Notes/Org/Tasks.org")
+(setq org-capture-templates
+      (doct '(("Facultad" :keys "f"
+               :file +org-capture-tasks
+               :prepend t
+               :template ("* [ ] %^{Description} "
+                          ":PROPERTIES:"
+                          ":Created: %U"
+                          ":END:"
+                          )
+               :children (("Algoritmos" :keys "a"
+                           :olp ("Facultad" "Algoritmos")
+                           :hook (lambda () (message "New task on Algoritmos"))
+                           :template ("* [ ] %^{Description} "
+                                      ":PROPERTIES:"
+                                      ":Created: %U"
+                                      ":END:"
+                                      "%a"
+                                      ))
+                          ("Analisis" :keys "n"
+                           :olp ("Facultad" "Analisis")
+                           :hook (lambda () (message "New task on Analisis")))
+                          ("Fisica" :keys "f"
+                           :olp ("Facultad" "Fisica")
+                           :hook (lambda () (message "New task on Fisica")))))
+              ("Tasks" :keys "t"
+               :file +org-capture-tasks
+               :prepend t
+               :headline  "Inbox"
+               :children (("Task"  :keys "t"
+                           :template ("* [ ] %^{Description}"
+                                      ":PROPERTIES:"
+                                      ":Created: %U"
+                                      ":END:"
+                                      )
+                           :hook (lambda () (message "New task on Inbox")))
+                          ("Task with reference" :keys "r"
+                           :template ("* [ ] %^{Description}"
+                                      ":PROPERTIES:"
+                                      ":Created: %U"
+                                      ":END:"
+                                      "%a"
+                                      )
+                           :hook (lambda () (message "New task on Inbox")))))
+              ("Programacion" :keys "p"
+               :file +org-capture-tasks
+               :prepend t
+               :olp ("Programacion" "Inbox")
+               :children (("Fixme"  :keys "f"
+                           :template ("* FIXME %^{Description}"
+                                      ":PROPERTIES:"
+                                      ":Created: %U"
+                                      ":END:"
+                                      "%a"
+                                      )
+                           :hook (lambda () (message "New task on Programacion/Inbox")))
+                          ("Task" :keys "t"
+                           :template ("* [ ] %^{Description}"
+                                      ":PROPERTIES:"
+                                      ":Created: %U"
+                                      ":END:"
+                                      )
+                           :hook (lambda () (message "New task on Programacion/Inbox")))
+                          ("Task with reference" :keys "r"
+                           :template ("* [ ] %^{Description}"
+                                      ":PROPERTIES:"
+                                      ":Created: %U"
+                                      ":END:"
+                                      "%a"
+                                      )
+                           :hook (lambda () (message "New task on Programacion/Inbox")))))
+              ("Notes" :keys "n"
+               :file "~/Documents/Notes/Org/Notes.org"
+               :prepend t
+               :template ("* %^{Description}"
+                          ":PROPERTIES:"
+                          ":Created: %U"
+                          ":END:"
+                          )
+               :hook (lambda () (message "New Note")))
+              ("Links" :keys "l"
+               :file "~/Documents/Notes/Org/Links.org"
+               :prepend t
+               :type entry
+               :headline "Inbox"
+               :children (("Simple link" :keys "l"
+                           :template ("* [[%^{Link}][%^{Description}]]"
+                                      ":PROPERTIES:"
+                                      ":Created: %U"
+                                      ":END:"
+                                      ))
+                          ("Cliplink" :keys "c"
+                           :template ("* %(org-cliplink-capture)"
+                                      ":PROPERTIES:"
+                                      ":Created: %U"
+                                      ":END:")))
 
-          ("w" "Workflows")
-          ("we" "Checking Email" entry (file+olp+datetree "~/Documents/Notes/Org/Journal.org")
-           "* Checking Email :email:\n\n%?" :clock-in :clock-resume :empty-lines 1)
-
-          ("m" "Metrics Capture")
-          ("mw" "Weight" table-line (file+headline "~/Documents/Notes/Org/Metrics.org" "Weight")
-           "| %U | %^{Weight} | %^{Notes} |" :kill-buffer t)))
-
+               :hook (lambda () (message "New Link")))
+              ("Agenda" :keys "a"
+               :file "~/Documents/Notes/Org/Agenda.org"
+               :prepend t
+               :headline "Inbox"
+               :template ("* [ ] %^{Description}"
+                          "DEADLINE: %^{Due date:}t"
+                          ":PROPERTIES:"
+                          ":Created: %U"
+                          ":END:")
+               :hook (lambda () (message "New Deadline")))
+              ("Journal" :keys "j"
+               :file "~/Documents/Notes/Org/Journal.org"
+               :datetree nil|t
+               :prepend t
+               :type entry
+               :hook (lambda () (doom/window-enlargen))
+               :children (("Journal" :keys "j"
+                           :template ("\n* %<%I:%M %p> - Diario \n%?\n\n"))
+                          ("Rutina matutina" :keys "r"
+                           :template ("* Rutina matutina \n/mr%?"
+                                      "* Agradecimientos / Motivacion"))))
+              )))
+#+END_SRC
+** Habits
+#+BEGIN_SRC emacs-lisp
   (require 'org-habit)
   (add-to-list 'org-modules 'org-habit)
-  (setq org-habit-graph-column 60))
+  (setq org-habit-graph-column 60)
+#+END_SRC
+** Visuals
+*** Font Display
+Make headings a bit bigger
+#+BEGIN_SRC emacs-lisp
+(custom-set-faces!
+  '(outline-1 :weight semi-bold :height 1.25)
+  '(outline-2 :weight semi-bold :height 1.15)
+  '(outline-3 :weight semi-bold :height 1.12)
+  '(outline-4 :weight semi-bold :height 1.09)
+  '(outline-5 :weight semi-bold :height 1.06)
+  '(outline-6 :weight semi-bold :height 1.03)
+  '(outline-8 :weight semi-bold)
+  '(outline-9 :weight semi-bold))
+#+END_SRC
+Make the title bigger
+#+BEGIN_SRC emacs-lisp
+(after! org
+  (custom-set-faces!
+    '(org-document-title :height 1.2)))
+#+END_SRC
+*** Symbols
+Use unicode characters for check boxes and other commands
+YOU MUST HAVE THE ~+extra~ ENABLE ON ~:ui ligatures~
+#+BEGIN_SRC emacs-lisp
+(after! org
+  (appendq! +ligatures-extra-symbols
+            `(:list_property "∷"
+              :em_dash       "—"
+              :ellipses      "…"
+              :title         "𝙏"
+              :subtitle      "𝙩"
+              :author        "𝘼"
+              :date          "𝘿"
+              :property      "☸"
+              :options       "⌥"
+              :latex_class   "🄲"
+              :latex_header  "⇥"
+              :beamer_header "↠"
+              :attr_latex    "🄛"
+              :attr_html     "🄗"
+              :begin_quote   "❮"
+              :end_quote     "❯"
+              :caption       "☰"
+              :header        "›"
+              :results       "➥"
+              :begin_export  "⯮"
+              :end_export    "⯬"
+              :properties    "⚙"
+              :end           "∎"))
+  (set-ligatures! 'org-mode
+    :merge t
+    :list_property "::"
+    :em_dash       "---"
+    :ellipsis      "..."
+    :title         "#+title:"
+    :subtitle      "#+subtitle:"
+    :author        "#+author:"
+    :date          "#+date:"
+    :property      "#+property:"
+    :options       "#+options:"
+    :latex_class   "#+latex_class:"
+    :latex_header  "#+latex_header:"
+    :beamer_header "#+beamer_header:"
+    :attr_latex    "#+attr_latex:"
+    :attr_html     "#+attr_latex:"
+    :begin_quote   "#+begin_quote"
+    :end_quote     "#+end_quote"
+    :caption       "#+caption:"
+    :header        "#+header:"
+    :begin_export  "#+begin_export"
+    :end_export    "#+end_export"
+    :results       "#+RESULTS:"
+    :property      ":PROPERTIES:"
+    :end           ":END:"))
+(plist-put +ligatures-extra-symbols :name "⁍")
+#+END_SRC
+*** Exporting (general)
+#+BEGIN_SRC emacs-lisp
+(after! org (setq org-export-headline-levels 5)) ; I like nesting
+(after! org
+  (require 'ox-extra)
+  (ox-extras-activate '(ignore-headlines)))
+#+END_SRC
+** Babel
+Set babel to use python3
+#+BEGIN_SRC emacs-lisp
+(setq org-babel-python-command "python3")
+#+END_SRC
+Use auto-complete here
+#+BEGIN_SRC emacs-lisp
+(defun tec-org-python ()
+  (if (eq major-mode 'python-mode)
+      (progn (anaconda-mode t)
+             (company-mode t))))
+(add-hook 'org-src-mode-hook 'tec-org-python)
 #+END_SRC
 * Automatically "Tangle" on Save
 Handy tip from [[https://leanpub.com/lit-config/read#leanpub-auto-configuring-emacs-and--org-mode-for-literate-programming][this book]] on literate programming.
@@ -414,16 +648,13 @@ Handy tip from [[https://leanpub.com/lit-config/read#leanpub-auto-configuring-em
 (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'dw/org-babel-tangle-dont-ask
                                               'run-at-end 'only-in-org-mode)))
 #+END_SRC
-
-
-* DEFT 
+* DEFT
 Deft is an Emacs mode for quickly browsing, filtering, and editing directories of plain text notes. Deft will recognize as notes all .txt, .md and .org files within the Documents directory.
 #+BEGIN_SRC emacs-lisp
 (setq deft-directory "~/Documents/Notes"
       deft-extensions '("txt" "org" "md")
       deft-recursive t)
 #+END_SRC
-
 * REGISTERS
 Emacs registers are compartments where you can save text, rectangles and positions for later use. Once you save text or a rectangle in a register, you can copy it into the buffer once or many times; once you save a position in a register, you can jump back to that position once or many times.  The default GNU Emacs keybindings for these commands (with the exception of counsel-register) involves 'C-x r' followed by one or more other keys.  I wanted to make this a little more user friendly, and since I am using Doom Emacs, I choose to replace the 'C-x r' part of the key chords with 'SPC r'.
 
@@ -476,7 +707,6 @@ Emacs registers are compartments where you can save text, rectangles and positio
       :desc "Point to register"
       "r SPC" #'point-to-register)
 #+END_SRC
-
 * SHELLS
 Settings for the various shells and terminal emulators within Emacs.
 + 'shell-file-name' -- sets the shell to be used in M-x shell, M-x term, M-x ansi-term and M-x vterm.
@@ -486,7 +716,6 @@ Settings for the various shells and terminal emulators within Emacs.
 (setq shell-file-name "/bin/zsh"
       eshell-aliases-file "~/.doom.d/aliases")
 #+END_SRC
-
 * SPLITS
 I set splits to default to opening on the right using 'prefer-horizontal-split'.  I set a keybinding for 'clone-indirect-buffer-other-window' for when I want to have the same document in two splits.  The text of the indirect buffer is always identical to the text of its base buffer; changes made by editing either one are visible immediately in the other.  But in all other respects, the indirect buffer and its base buffer are completely separate.  For example, I can fold one split but other will be unfolded.
 
@@ -499,7 +728,6 @@ I set splits to default to opening on the right using 'prefer-horizontal-split'.
       :desc "Clone indirect buffer other window"
       "b c" #'clone-indirect-buffer-other-window)
 #+END_SRC
-
 * SUBLIMITY
 The sublimity extension offers Sublime-like smooth scrolling and an experimental minimap.  You can also require sublimity-attractive if you want to center everything for a distraction-free mode.  I do not use this extension, hence the reason I have sublimity-mode set to 0.  Set this to 1 to enable it.
 
@@ -508,15 +736,149 @@ The sublimity extension offers Sublime-like smooth scrolling and an experimental
 (require 'sublimity-attractive)
 (sublimity-mode 0)
 #+END_SRC
-
-* WINNER MODE
-Winner mode has been included with GNU Emacs since version 20.  This is a global minor mode and, when activated, it allows you to “undo” (and “redo”) changes in the window configuration with the key commands 'SCP w <left>' and 'SPC w <right>'.
-
+* CENTAUR TABS
+Make tabs nicer
 #+BEGIN_SRC emacs-lisp
-(map! :leader
-      :desc "Winner redo"
-      "w <right>" #'winner-redo
-      :leader
-      :desc "Winner undo"
-      "w <left>" #'winner-undo)
+(after! centaur-tabs
+  (centaur-tabs-mode -1)
+  (setq centaur-tabs-height 36
+        centaur-tabs-set-icons t
+        centaur-tabs-modified-marker "o"
+        centaur-tabs-close-button "×"
+        centaur-tabs-set-bar 'above
+        centaur-tabs-gray-out-icons 'buffer)
+  (centaur-tabs-change-fonts "P22 Underground Book" 160))
+;; (setq x-underline-at-descent-line t)
+#+END_SRC
+* COMPANY
+Some setting to the completion software
+#+BEGIN_SRC emacs-lisp
+(after! company
+  (setq company-idle-delay 0.5
+        company-minimum-prefix-length 2)
+  (setq company-show-numbers t)
+  (add-hook 'evil-normal-state-entry-hook #'company-abort)) ;; make aborting less annoying.
+#+END_SRC
+Improve memory 
+#+BEGIN_SRC emacs-lisp
+(setq-default history-length 1000)
+(setq-default prescient-history-length 1000)
+#+END_SRC
+* ESS
+#+BEGIN_SRC emacs-lisp
+(set-company-backend! 'ess-r-mode '(company-R-args company-R-objects company-dabbrev-code :separate))
+#+END_SRC
+* EROS-EVAL
+#+BEGIN_SRC emacs-lisp
+(setq eros-eval-result-prefix "⟹ ")
+#+END_SRC
+* EVIL
+evil-escape-mode turn off
+#+BEGIN_SRC emacs-lisp
+(after! evil-escape (evil-escape-mode -1))
+#+END_SRC
+subtitution are global now
+#+BEGIN_SRC emacs-lisp
+(after! evil (setq evil-ex-substitute-global t)) ; I like my s/../.. to by global by default
+#+END_SRC
+* INFO COLORS
+#+BEGIN_SRC emacs-lisp
+(use-package! info-colors
+  :commands (info-colors-fontify-node))
+
+(add-hook 'Info-selection-hook 'info-colors-fontify-node)
+
+(add-hook 'Info-mode-hook #'mixed-pitch-mode)
+#+END_SRC
+* MAGIT
+Syntax-highlighting for magit
+#+BEGIN_SRC emacs-lisp
+(after! magit
+     (magit-delta-mode +1))
+#+END_SRC
+* ORG MSG
+Minor tweaks
+#+BEGIN_SRC emacs-lisp
+(setq +org-msg-accent-color "#1a5fb4")
+(map! :map org-msg-edit-mode-map
+      :after org-msg
+      :n "G" #'org-msg-goto-body)
+#+END_SRC
+* ORG CHEF
+Only will load when we want, by command or in a capture template
+#+BEGIN_SRC emacs-lisp
+(use-package! org-chef
+  :commands (org-chef-insert-recipe org-chef-get-recipe-from-url))
+#+END_SRC
+* WHICH-KEY
+Make the popup a bit faster
+#+BEGIN_SRC emacs-lisp
+(setq which-key-idle-delay 0.5)
+#+END_SRC
+I also think that having evil- appear in so many popups is a bit too verbose, let’s change that, and do a few other similar tweaks while we’re at it.
+#+BEGIN_SRC emacs-lisp
+(setq which-key-allow-multiple-replacements t)
+(after! which-key
+  (pushnew!
+   which-key-replacement-alist
+   '(("" . "\\`+?evil[-:]?\\(?:a-\\)?\\(.*\\)") . (nil . "◂\\1"))
+   '(("\\`g s" . "\\`evilem--?motion-\\(.*\\)") . (nil . "◃\\1"))
+   ))
+#+END_SRC
+* WRITEROOM
+Less zoom
+#+BEGIN_SRC emacs-lisp
+(setq +zen-text-scale 0.6)
+#+END_SRC
+Make zen mode even cleaner
+#+BEGIN_SRC emacs-lisp
+(after! writeroom-mode
+  (add-hook 'writeroom-mode-hook
+            (defun +zen-cleaner-org ()
+              (when (and (eq major-mode 'org-mode) writeroom-mode)
+                (setq-local -display-line-numbers display-line-numbers
+                            display-line-numbers nil)
+                (setq-local -org-indent-mode org-indent-mode)
+                (org-indent-mode -1)
+                (when (featurep 'org-superstar)
+                  (setq-local -org-superstar-headline-bullets-list org-superstar-headline-bullets-list
+                              ;; org-superstar-headline-bullets-list '("🙐" "🙑" "🙒" "🙓" "🙔" "🙕" "🙖" "🙗")
+                              org-superstar-headline-bullets-list '("🙘" "🙙" "🙚" "🙛")
+                              -org-superstar-remove-leading-stars org-superstar-remove-leading-stars
+                              org-superstar-remove-leading-stars t)
+                  (org-superstar-restart)))))
+  (add-hook 'writeroom-mode-disable-hook
+            (defun +zen-dirty-org ()
+              (when (eq major-mode 'org-mode)
+                (setq-local display-line-numbers -display-line-numbers)
+                (when -org-indent-mode
+                  (org-indent-mode 1))
+                (when (featurep 'org-superstar)
+                  (setq-local org-superstar-headline-bullets-list -org-superstar-headline-bullets-list
+                              org-superstar-remove-leading-stars -org-superstar-remove-leading-stars)
+                  (org-superstar-restart))))))
+#+END_SRC
+* YASNIPPET
+Enable nasted snippets
+#+BEGIN_SRC emacs-lisp
+(yas-global-mode 1)
+(setq yas-triggers-in-field t)
+(add-hook 'yas-minor-mode-hook (lambda ()
+                                 (yas-activate-extra-mode 'fundamental-mode)))
+#+END_SRC
+* MARKDOWN
+Mixed pitch and only visual line wrapping
+#+BEGIN_SRC emacs-lisp
+(add-hook! (gfm-mode markdown-mode) #'mixed-pitch-mode)
+(add-hook! (gfm-mode markdown-mode) #'visual-line-mode #'turn-off-auto-fill)
+#+END_SRC
+Change headers sizes
+#+BEGIN_SRC emacs-lisp
+(custom-set-faces!
+  '(markdown-header-face-1 :height 1.25 :weight extra-bold :inherit markdown-header-face)
+  '(markdown-header-face-2 :height 1.15 :weight bold       :inherit markdown-header-face)
+  '(markdown-header-face-3 :height 1.08 :weight bold       :inherit markdown-header-face)
+  '(markdown-header-face-4 :height 1.00 :weight bold       :inherit markdown-header-face)
+  '(markdown-header-face-5 :height 0.90 :weight bold       :inherit markdown-header-face)
+  '(markdown-header-face-6 :height 0.75 :weight extra-bold :inherit markdown-header-face))
 #+END_SRC
