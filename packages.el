@@ -71,3 +71,5 @@
 
 (package! origami)
 (package! wakatime-mode)
+(package! smooth-scrolling)
+

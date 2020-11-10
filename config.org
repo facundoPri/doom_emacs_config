@@ -32,7 +32,7 @@
 - [[#registers][REGISTERS]]
 - [[#shells][SHELLS]]
 - [[#splits][SPLITS]]
-- [[#sublimity][SUBLIMITY]]
+- [[#sublimity-and-smooth_scrolling][SUBLIMITY AND SMOOTH_SCROLLING]]
 - [[#centaur-tabs][CENTAUR TABS]]
 - [[#company][COMPANY]]
 - [[#ess][ESS]]
@@ -41,7 +41,6 @@
 - [[#info-colors][INFO COLORS]]
 - [[#magit][MAGIT]]
 - [[#org-msg][ORG MSG]]
-- [[#org-chef][ORG CHEF]]
 - [[#which-key][WHICH-KEY]]
 - [[#writeroom][WRITEROOM]]
 - [[#yasnippet][YASNIPPET]]
@@ -189,10 +188,10 @@ Ivy is a generic completion mechanism for Emacs.  By default, Doom Emacs does no
 (setq ivy-sort-max-size 50000)
 #+END_SRC
 * LINE SETTINGS
-I have toggled display-line-numbers-type so I have line numbers displayed.  Doom Emacs uses 'SPC t' for "toggle" commands, so I choose 'SPC t t' for toggle-truncate-lines.
+I have disable display-line-numbers-type to increase performance.  Doom Emacs uses 'SPC t' for "toggle" commands, so I choose 'SPC t t' for toggle-truncate-lines.
 
 #+BEGIN_SRC emacs-lisp
-(setq display-line-numbers-type t)
+(setq display-line-numbers-type nil)
 (map! :leader
       :desc "Toggle truncate lines"
       "t t" #'toggle-truncate-lines)
@@ -322,12 +321,13 @@ TAGs persistent alist
 *** Bullets and priorities
 Set the priority faces and elipsis
 #+BEGIN_SRC emacs-lisp
+(remove-hook 'org-mode-hook #'org-superstar-mode)
 (after! org-superstar
   (setq org-superstar-headline-bullets-list '("◦""•")
         org-superstar-prettify-item-bullets t ))
 
 (use-package org-fancy-priorities
-  :ensure t
+  ;;:ensure t
   :hook
   (org-mode . org-fancy-priorities-mode)
   :config
@@ -529,8 +529,9 @@ Cofiguration
                :children (("Journal" :keys "j"
                            :template ("\n* %<%I:%M %p> - Diario \n%?\n\n"))
                           ("Rutina matutina" :keys "r"
-                           :template ("* Rutina matutina \n/mr%?"
-                                      "* Agradecimientos / Motivacion"))))
+                           :template ("* Rutina matutina \n/mr\t"
+                                      "* Agradecimientos / Motivacion"
+                                      "%?"))))
               )))
 #+END_SRC
 ** Habits
@@ -637,17 +638,22 @@ Use auto-complete here
 #+END_SRC
 * Automatically "Tangle" on Save
 Handy tip from [[https://leanpub.com/lit-config/read#leanpub-auto-configuring-emacs-and--org-mode-for-literate-programming][this book]] on literate programming.
+But with some changes proposed by [[https://www.youtube.com/watch?v=kkqVTDbfYp4&t=1s][this video]]
 #+BEGIN_SRC emacs-lisp
-;; Since we don't want to disable org-confirm-babel-evaluate all
-;; of the time, do it around the after-save-hook
-(defun dw/org-babel-tangle-dont-ask ()
-  ;; Dynamic scoping to the rescue
-  (let ((org-confirm-babel-evaluate nil))
-    (org-babel-tangle)))
+;; Automatically tangle our Emacs.org config file when we save it
+(defun efs/org-babel-tangle-config ()
+  (when (string-equal (buffer-file-name)
+                      (expand-file-name "~.doom.d/config.org"))
+    ;; Dynamic scoping to the rescue
+    (let ((org-confirm-babel-evaluate nil))
+      (org-babel-tangle))))
 
-(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'dw/org-babel-tangle-dont-ask
-                                              'run-at-end 'only-in-org-mode)))
+(add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'efs/org-babel-tangle-config)))
 #+END_SRC
+
+#+RESULTS:
+| er/add-org-mode-expansions | (lambda nil (add-hook 'after-save-hook #'efs/org-babel-tangle-config)) | org-ref-org-menu | +lookup--init-org-mode-handlers-h | (closure (t) (&rest _) (add-hook 'before-save-hook 'org-encrypt-entries nil t)) | #[0 \301\211\207 [imenu-create-index-function org-imenu-get-tree] 2] | doom--setq-gcmh-high-cons-threshold-for-org-mode-h | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-show-all append local] 5] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-babel-show-result-all append local] 5] | org-babel-result-hide-spec | org-babel-hide-all-hashes | doom-disable-show-paren-mode-h | doom-disable-show-trailing-whitespace-h | +org-enable-auto-reformat-tables-h | +org-enable-auto-update-cookies-h | +org-make-last-point-visible-h | org-fancy-priorities-mode | evil-org-mode | toc-org-enable | embrace-org-mode-hook | org-eldoc-load | +literate-enable-recompile-h | org-ref-setup-label-finders |
+
 * DEFT
 Deft is an Emacs mode for quickly browsing, filtering, and editing directories of plain text notes. Deft will recognize as notes all .txt, .md and .org files within the Documents directory.
 #+BEGIN_SRC emacs-lisp
@@ -728,13 +734,16 @@ I set splits to default to opening on the right using 'prefer-horizontal-split'.
       :desc "Clone indirect buffer other window"
       "b c" #'clone-indirect-buffer-other-window)
 #+END_SRC
-* SUBLIMITY
+* SUBLIMITY AND SMOOTH_SCROLLING
 The sublimity extension offers Sublime-like smooth scrolling and an experimental minimap.  You can also require sublimity-attractive if you want to center everything for a distraction-free mode.  I do not use this extension, hence the reason I have sublimity-mode set to 0.  Set this to 1 to enable it.
 
 #+BEGIN_SRC emacs-lisp
 (require 'sublimity-scroll)
 (require 'sublimity-attractive)
 (sublimity-mode 0)
+
+(require 'smooth-scrolling)
+(smooth-scrolling-mode 1)
 #+END_SRC
 * CENTAUR TABS
 Make tabs nicer
@@ -803,12 +812,6 @@ Minor tweaks
 (map! :map org-msg-edit-mode-map
       :after org-msg
       :n "G" #'org-msg-goto-body)
-#+END_SRC
-* ORG CHEF
-Only will load when we want, by command or in a capture template
-#+BEGIN_SRC emacs-lisp
-(use-package! org-chef
-  :commands (org-chef-insert-recipe org-chef-get-recipe-from-url))
 #+END_SRC
 * WHICH-KEY
 Make the popup a bit faster
