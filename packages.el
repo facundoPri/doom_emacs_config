@@ -65,11 +65,8 @@
 (package! org-super-agenda)
 (package! doct
   :recipe (:host github :repo "progfolio/doct"))
-(package! org-pretty-table-mode
-  :recipe (:host github :repo "Fuco1/org-pretty-table"))
 (package! ox-gfm)
 (package! org-ref)
-(package! org-chef)
 (package! magit-delta :recipe (:host github :repo "dandavison/magit-delta") :pin "0c7d8b2359")
 
 (package! origami)
